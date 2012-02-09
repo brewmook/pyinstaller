@@ -17,6 +17,9 @@
 # Temporary vim files
 *.swp
 
+# Temporary rope files
+.ropeproject
+
 # /buildtests/
 /buildtests/build*
 /buildtests/dist*
@@ -24,6 +27,7 @@
 /buildtests/test*.exe
 /buildtests/warn*.txt
 /buildtests/python_exe.build
+/buildtests/report.xml
 
 /buildtests/*/build
 /buildtests/*/dist
@@ -39,6 +43,9 @@
 # /buildtests/libraries/
 /buildtests/libraries/tinysample.png
 /buildtests/libraries/test_xml.spec
+/buildtests/basic/test_absolute_ld_library_path.spec
+/buildtests/basic/test_absolute_python_path.spec
+/buildtests/libraries/test_sqlalchemy.spec
 
 /e2etests/common/hanoi[1-9]
 
