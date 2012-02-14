@@ -1,6 +1,6 @@
 # -*- mode: python -*-
 
-__testname__ = 'test_pyside_declarative'
+__testname__ = 'test_PySide_phonon'
 
 a = Analysis([__testname__ + '.py'])
 pyz = PYZ(a.pure)
@@ -11,14 +11,14 @@ exe = EXE(pyz,
                             'pyi.' + sys.platform,
                             __testname__,
                             __testname__ + '.exe'),
-          debug=True,
-          strip=None,
-          upx=True,
+          debug=False,
+          strip=False,
+          upx=False,
           console=True )
 coll = COLLECT(exe,
                a.binaries,
                a.zipfiles,
                a.datas,
-               strip=None,
-               upx=True,
+               strip=False,
+               upx=False,
                name=os.path.join('dist', __testname__))

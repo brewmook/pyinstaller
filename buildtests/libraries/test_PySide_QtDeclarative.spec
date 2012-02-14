@@ -1,6 +1,6 @@
 # -*- mode: python -*-
 
-__testname__ = 'test_pyside_phonon'
+__testname__ = 'test_PySide_QtDeclarative'
 
 a = Analysis([__testname__ + '.py'])
 pyz = PYZ(a.pure)
@@ -11,14 +11,14 @@ exe = EXE(pyz,
                             'pyi.' + sys.platform,
                             __testname__,
                             __testname__ + '.exe'),
-          debug=False,
-          strip=False,
-          upx=False,
+          debug=True,
+          strip=None,
+          upx=True,
           console=True )
 coll = COLLECT(exe,
                a.binaries,
                a.zipfiles,
                a.datas,
-               strip=False,
-               upx=False,
+               strip=None,
+               upx=True,
                name=os.path.join('dist', __testname__))

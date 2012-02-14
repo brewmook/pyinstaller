@@ -5,13 +5,13 @@ from PySide.phonon import Phonon
 def main():
 
     app = QtGui.QApplication([])
-    app.setApplicationName('test_pyside_phonon')
+    app.setApplicationName('test_PySide_phonon')
 
     print "Qt plugin paths: " + unicode(list(app.libraryPaths()))
     print 'Qt Libraries path: ' + unicode(QtCore.QLibraryInfo.location(QtCore.QLibraryInfo.LibrariesPath))
 
     try:
-        media_source = Phonon.MediaSource('test_pyside_phonon.wav')
+        media_source = Phonon.MediaSource('test_PySide_phonon.wav')
 
         media_object = Phonon.MediaObject()
         media_object.setCurrentSource(media_source)
