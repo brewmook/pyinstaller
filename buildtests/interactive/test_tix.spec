@@ -1,6 +1,6 @@
 # -*- mode: python -*-
 
-__testname__ = 'test_tkinter'
+__testname__ = 'test_tix'
 
 a = Analysis([__testname__ + '.py'])
 pyz = PYZ(a.pure)

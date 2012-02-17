@@ -18,7 +18,6 @@
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
-
 import sys
 import os
 import shutil
@@ -33,19 +32,21 @@ import traceback
 
 from PyInstaller.loader import archive, carchive, iu
 
-import PyInstaller
+import PyInstaller.depend.modules
 from PyInstaller import HOMEPATH, CONFIGDIR, PLATFORM
 from PyInstaller import is_win, is_unix, is_aix, is_darwin, is_cygwin
 from PyInstaller import is_py23, is_py24
 import PyInstaller.compat as compat
 from PyInstaller.compat import hashlib, set
 from PyInstaller.depend import dylib
+from PyInstaller.utils import misc
 
+
+import PyInstaller.log as logging
 if is_win:
     from PyInstaller.utils import winmanifest
 
 
-import PyInstaller.log as logging
 logger = logging.getLogger('PyInstaller.build')
 
 STRINGTYPE = type('')
@@ -60,6 +61,10 @@ SPECPATH = None
 BUILDPATH = None
 WARNFILE = None
 NOCONFIRM = None
+
+# Some modules are included if they are detected at build-time or
+# if a command-line argument is specified. (e.g. --ascii)
+HIDDENIMPORTS = []
 
 rthooks = {}
 
@@ -245,7 +250,7 @@ def _rmdir(path):
         os.remove(path)
         return
 
-    if NOCONFIRM :
+    if NOCONFIRM:
         choice = 'y'
     elif sys.stdout.isatty():
         choice = raw_input('WARNING: The output directory "%s" and ALL ITS '
@@ -332,7 +337,7 @@ class Target:
 
 class Analysis(Target):
     _old_scripts = set((
-        absnormpath(os.path.join(HOMEPATH, "support","_mountzlib.py")),
+        absnormpath(os.path.join(HOMEPATH, "support", "_mountzlib.py")),
         absnormpath(os.path.join(CONFIGDIR, "support", "useUnicode.py")),
         absnormpath(os.path.join(CONFIGDIR, "support", "useTK.py")),
         absnormpath(os.path.join(HOMEPATH, "support", "useUnicode.py")),
@@ -345,7 +350,7 @@ class Analysis(Target):
                  hookspath=None, excludes=None):
         Target.__init__(self)
         self.inputs = [
-            os.path.join(HOMEPATH, "support","_pyi_bootstrap.py"),
+            os.path.join(HOMEPATH, "support", "_pyi_bootstrap.py"),
             ]
         for script in scripts:
             if absnormpath(script) in self._old_scripts:
@@ -357,7 +362,11 @@ class Analysis(Target):
         self.pathex = []
         if pathex:
             self.pathex = [absnormpath(path) for path in pathex]
+
         self.hiddenimports = hiddenimports or []
+        # Include modules detected at build time. Like 'codecs' and encodings.
+        self.hiddenimports.extend(HIDDENIMPORTS)
+
         self.hookspath = hookspath
         self.excludes = excludes
         self.scripts = TOC()
@@ -441,7 +450,7 @@ class Analysis(Target):
                 continue
             logger.info("Analyzing hidden import %r", modnm)
             importTracker.analyze_one(modnm)
-            if not importTracker.modules.has_key(modnm):
+            if not modnm in importTracker.modules:
                 logger.error("Hidden import %r not found", modnm)
 
         ###################################################
@@ -460,14 +469,14 @@ class Analysis(Target):
             rthooks.extend(_findRTHook(modnm))  # XXX
             datas.extend(mod.datas)
 
-            if isinstance(mod, mf.BuiltinModule):
+            if isinstance(mod, PyInstaller.depend.modules.BuiltinModule):
                 pass
-            elif isinstance(mod, mf.ExtensionModule):
+            elif isinstance(mod, PyInstaller.depend.modules.ExtensionModule):
                 binaries.append((mod.__name__, mod.__file__, 'EXTENSION'))
                 # allows hooks to specify additional dependency
                 # on other shared libraries loaded at runtime (by dlopen)
                 binaries.extend(mod.binaries)
-            elif isinstance(mod, (mf.PkgInZipModule, mf.PyInZipModule)):
+            elif isinstance(mod, (PyInstaller.depend.modules.PkgInZipModule, PyInstaller.depend.modules.PyInZipModule)):
                 zipfiles.append(("eggs/" + os.path.basename(str(mod.owner)),
                                  str(mod.owner), 'ZIPFILE'))
             else:
@@ -543,7 +552,7 @@ class Analysis(Target):
 
         if is_aix:
             # Shared libs on AIX are archives with shared object members, thus the ".a" suffix.
-            names = ('libpython%d.%d.a' % sys.version_info[:2],) 
+            names = ('libpython%d.%d.a' % sys.version_info[:2],)
         elif is_unix:
             # Other *nix platforms.
             names = ('libpython%d.%d.so' % sys.version_info[:2],)
@@ -1450,6 +1459,7 @@ def TkTree():
                      'Please update your spec-file. See '
                      'http://www.pyinstaller.org/wiki/MigrateTo2.0 for details')
 
+
 def TkPKG():
     raise SystemExit('TkPKG has been removed in PyInstaller 2.0. '
                      'Please update your spec-file. See '
@@ -1543,15 +1553,22 @@ def __add_options(parser):
                       'confirmation' % os.path.join('SPECPATH', 'dist', 'SPECNAME'))
     parser.add_option('--upx-dir', default=None,
                       help='Directory containing UPX (default: search in path)')
+    parser.add_option("-a", "--ascii", action="store_true",
+                 help="do NOT include unicode encodings "
+                      "(default: included if available)")
 
 
-def main(specfile, buildpath, noconfirm, **kw):
+def main(specfile, buildpath, noconfirm, ascii=False, **kw):
     global config
     global icon, versioninfo, winresource, winmanifest, pyasm
-    global NOCONFIRM
+    global HIDDENIMPORTS, NOCONFIRM
     NOCONFIRM = noconfirm
 
-    # :fixme: this should be a global import, but can't due to recursive imports
+    # Test unicode support.
+    if not ascii:
+        HIDDENIMPORTS.extend(misc.get_unicode_modules())
+
+    # FIXME: this should be a global import, but can't due to recursive imports
     import PyInstaller.configure as configure
     config = configure.get_config(kw.get('upx_dir'))
 

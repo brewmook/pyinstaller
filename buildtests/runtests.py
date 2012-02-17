@@ -1,4 +1,7 @@
 #!/usr/bin/env python
+#
+# Copyright (C) 2011-2012 Martin Zibricky
+# Copyright (C) 2011-2012 Hartmut Goebel
 # Copyright (C) 2005-2011 Giovanni Bajo
 # Based on previous work under copyright (c) 2001, 2002 McMillan Enterprises, Inc.
 #
@@ -244,7 +247,11 @@ class BuildTestRunner(object):
             return 1
         else:
             self._plain_msg("RUNNING: " + prog)
+            old_wd = os.getcwd()
+            os.chdir(os.path.dirname(prog))
+            prog = os.path.join(os.curdir, os.path.basename(prog))
             retcode, out, err = compat.exec_command_all(prog)
+            os.chdir(old_wd)
             self._msg('STDOUT')
             self._plain_msg(out)
             self._msg('STDERR')
@@ -551,7 +558,7 @@ def main():
         test_script = os.path.basename(os.path.splitext(args[0])[0])
         suite = unittest.TestSuite()
         suite.addTest(GenericTestCase(test_dir, test_script))
-        print 'Runnint single test:  %s' % (test_dir + '/' + test_script)
+        print 'Running single test:  %s' % (test_dir + '/' + test_script)
 
     # Run all tests or all interactive tests.
     else:

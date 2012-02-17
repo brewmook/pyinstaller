@@ -39,6 +39,7 @@ import zipimport
 def debug(msg):
     if 0:
         sys.stderr.write(msg + "\n")
+        sys.stderr.flush()
 
 
 #=======================Owners==========================#
@@ -187,10 +188,11 @@ class ZipOwner(Owner):
 
 
 # Define order where to look for Python modules first.
-# 1. look in executable created by PyInstaller.
+# 1. PYZOwner: look in executable created by PyInstaller.
 #    (_pyi_bootstrap.py will insert it (archive.PYZOwner) in front later.)
-# 2. zip files (.egg files)
-# 3. file system
+# 2. ZipOwner: zip files (.egg files)
+# 3. DirOwner: file system
+# 4. Owner:    module not found
 _globalownertypes = [
     ZipOwner,
     DirOwner,
@@ -217,19 +219,6 @@ class BuiltinImportDirector(ImportDirector):
     def getmod(self, nm, isbuiltin=imp.is_builtin):
         if isbuiltin(nm):
             mod = imp.load_module(nm, None, nm, ('', '', imp.C_BUILTIN))
-            return mod
-        return None
-
-
-class FrozenImportDirector(ImportDirector):
-    def __init__(self):
-        self.path = 'FrozenModules'
-
-    def getmod(self, nm, isfrozen=imp.is_frozen):
-        if isfrozen(nm):
-            mod = imp.load_module(nm, None, nm, ('', '', imp.PY_FROZEN))
-            if hasattr(mod, '__path__'):
-                mod.__importsub__ = lambda name, pname=nm, owner=self: owner.getmod(pname + '.' + name)
             return mod
         return None
 
@@ -357,7 +346,6 @@ class ImportManager:
     def __init__(self):
         self.metapath = [
             BuiltinImportDirector(),
-            FrozenImportDirector(),
             RegistryImportDirector(),
             PathImportDirector()
         ]
