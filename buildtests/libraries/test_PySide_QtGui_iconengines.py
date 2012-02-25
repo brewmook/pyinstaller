@@ -7,11 +7,7 @@ icon = QIcon('test_PySide_QtGui_iconengines.svg')
 pixmap = icon.pixmap(1,1)
 pixel = pixmap.toImage().pixel(0,0)
 
-if pixmap.size() != QSize(1, 1):
-    print "FAIL: Failed to convert to pixmap"
-    print "      Ensure your PySide install folder is first in your PATH"
-    status = 1
-elif pixel != 0xFF0000FF:
+if pixel != 0xFF0000FF:
     print "FAIL: pixel should be blue"
     status = 1
 else:
